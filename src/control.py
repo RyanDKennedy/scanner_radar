@@ -19,15 +19,15 @@ class Control:
         
         GPIO.setmode(GPIO.BCM)
 
-        GPIO.setup(self.step_yaw_pin, GPIO.OUTPUT)
-        GPIO.setup(self.dir_yaw_pin, GPIO.OUTPUT)
-        GPIO.setup(self.step_pitch_pin, GPIO.OUTPUT)
-        GPIO.setup(self.dir_pitch_pin, GPIO.OUTPUT)
+        GPIO.setup(self.step_yaw_pin, GPIO.OUT)
+        GPIO.setup(self.dir_yaw_pin, GPIO.OUT)
+        GPIO.setup(self.step_pitch_pin, GPIO.OUT)
+        GPIO.setup(self.dir_pitch_pin, GPIO.OUT)
         
-        GPIO.output(self.step_yaw_pin, GPIO_LOW)
-        GPIO.output(self.dir_yaw_pin, GPIO_LOW)
-        GPIO.output(self.step_pitch_pin, GPIO_LOW)
-        GPIO.output(self.dir_pitch_pin, GPIO_LOW)
+        GPIO.output(self.step_yaw_pin, GPIO.LOW)
+        GPIO.output(self.dir_yaw_pin, GPIO.LOW)
+        GPIO.output(self.step_pitch_pin, GPIO.LOW)
+        GPIO.output(self.dir_pitch_pin, GPIO.LOW)
 
     def __del__(self):
         GPIO.cleanup()
@@ -38,7 +38,7 @@ class Control:
 
         # calculate steps
         dtheta = desired_yaw - self.yaw
-        steps = round(dtheta / self.yaw_deg_per_step)
+        steps = round(abs(dtheta / self.yaw_deg_per_step))
 
         # get direction and new self.yaw
         direction = clockwise
@@ -60,24 +60,24 @@ class Control:
             sleep(delay)
 
     def set_pitch(self, desired_pitch):
-        clockwise = GPIO.LOW
-        counter_clockwise = GPIO.HIGH
+        up = GPIO.LOW
+        down = GPIO.HIGH
 
         # calculate steps
         dtheta = desired_pitch - self.pitch
-        steps = round(dtheta / self.pitch_deg_per_step)
+        steps = round(abs(dtheta / self.pitch_deg_per_step))
 
         # get direction and new self.pitch
-        direction = clockwise
+        direction = up
         if (dtheta < 0):
-            direction = counter_clockwise
+            direction = down
             self.pitch -= steps * self.pitch_deg_per_step
         else:
-            direction = clockwise
+            direction = up
             self.pitch += steps * self.pitch_deg_per_step
 
         # do gpio stuff
-        delay = 0.1
+        delay = 0.005
         GPIO.output(self.dir_pitch_pin, direction)
         sleep(delay)
         for step_num in range(0, steps):

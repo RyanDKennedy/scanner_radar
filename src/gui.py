@@ -11,15 +11,16 @@ class GUI:
 
     def __init__(self):
 
-        self.control = Control()
 
-        self.yaw_deg_per_step = 360/200
-        self.max_yaw_step = 199
+        self.yaw_deg_per_step = 6
+        self.max_yaw_step = 60
 
-        self.pitch_deg_per_step = 360/200
-        self.max_pitch_step = 29
+        self.pitch_deg_per_step = 5
+        self.max_pitch_step = 18
 
         self.distances = [[0 for i in range(self.max_pitch_step+1)] for i in range(self.max_yaw_step+1)]
+
+        self.control = Control(360/200, 360/(200 * 4))
 
         # GUI STUFF
         self.root = tk.Tk()
@@ -69,6 +70,9 @@ class GUI:
             if (self.animation_running == False):
                 self.feedback_lbl["text"] = "Canceled scan."
                 break
+
+        self.control.set_yaw(0)
+        self.control.set_pitch(0)
 
         # if here as a result of finishing the loops, not cancel condition
         if (self.animation_running == True):
