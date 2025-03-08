@@ -52,13 +52,10 @@ class GUI:
 
         self.root.mainloop()
 
-
     def animation(self, file_name):
 
         self.start_btn["state"] = "disabled"
         self.cancel_btn["state"] = "normal"
-
-        self.control.ready_gpio()
 
         # scan into self.distances
         for yaw_step in range(0, self.max_yaw_step + 1):
