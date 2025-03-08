@@ -1,4 +1,5 @@
 from time import sleep
+import random
 
 class Control:
 
@@ -20,4 +21,4 @@ class Control:
         sleep(0.0002)
 
     def get_distance(self):
-        return 5
+        return 5 + random.random()

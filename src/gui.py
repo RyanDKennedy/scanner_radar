@@ -12,10 +12,14 @@ class GUI:
     def __init__(self):
 
         self.control = Control()
-        self.max_yaw_deg = 359
-        self.max_pitch_deg = 70
 
-        self.distances = [[0] * (self.max_pitch_deg + 1)] * (self.max_yaw_deg + 1)
+        self.yaw_deg_per_step = 360/200
+        self.max_yaw_step = 199
+
+        self.pitch_deg_per_step = 360/200
+        self.max_pitch_step = 29
+
+        self.distances = [[0 for i in range(self.max_pitch_step+1)] for i in range(self.max_yaw_step+1)]
 
         # GUI STUFF
         self.root = tk.Tk()
@@ -57,13 +61,13 @@ class GUI:
         self.control.ready_gpio()
 
         # scan into self.distances
-        for yaw_deg in range(0, self.max_yaw_deg + 1):
-            self.control.set_yaw(yaw_deg)
-            self.progress.set((yaw_deg / self.max_yaw_deg) * 100)
+        for yaw_step in range(0, self.max_yaw_step + 1):
+            self.control.set_yaw(yaw_step * self.yaw_deg_per_step)
+            self.progress.set((yaw_step / self.max_yaw_step) * 100)
 
-            for pitch_deg in range(0, (self.max_pitch_deg + 1)):
-                self.control.set_pitch(pitch_deg)
-                self.distances[yaw_deg][pitch_deg] = self.control.get_distance()
+            for pitch_step in range(0, (self.max_pitch_step + 1)):
+                self.control.set_pitch(pitch_step * self.pitch_deg_per_step)
+                self.distances[yaw_step][pitch_step] = self.control.get_distance()
 
             if (self.animation_running == False):
                 self.feedback_lbl["text"] = "Canceled scan."
@@ -73,7 +77,6 @@ class GUI:
         if (self.animation_running == True):
             self.output_as_obj(file_name)
             self.feedback_lbl["text"] = "Successfully output results to "+file_name+"."
-
 
         self.animation_running = False
         self.start_btn["state"] = "normal"
@@ -99,34 +102,36 @@ class GUI:
         fd = open(path, "wt")
 
         # write vertices
-        for yaw_deg in range(0, self.max_yaw_deg + 1):
-            for pitch_deg in range(0, (self.max_pitch_deg + 1)):
-                x_coord = self.distances[yaw_deg][pitch_deg] * math.cos(yaw_deg * math.pi / 180) * math.cos(pitch_deg * math.pi / 180)
-                z_coord = self.distances[yaw_deg][pitch_deg] * math.sin(yaw_deg * math.pi / 180) * math.cos(pitch_deg * math.pi / 180)
-                y_coord = self.distances[yaw_deg][pitch_deg] * math.sin(pitch_deg * math.pi / 180)
-                fd.write("v "+str(x_coord)+" "+str(y_coord)+" "+str(z_coord)+"\n")
-
+        for yaw_step in range(0, self.max_yaw_step + 1):
+            yaw_deg = yaw_step * self.yaw_deg_per_step
+            for pitch_step in range(0, (self.max_pitch_step + 1)):
+                pitch_deg = pitch_step * self.pitch_deg_per_step
+                x_coord = self.distances[yaw_step][pitch_step] * math.cos(yaw_deg * math.pi / 180) * math.cos(pitch_deg * math.pi / 180)
+                z_coord = self.distances[yaw_step][pitch_step] * math.sin(yaw_deg * math.pi / 180) * math.cos(pitch_deg * math.pi / 180)
+                y_coord = self.distances[yaw_step][pitch_step] * math.sin(pitch_deg * math.pi / 180)
+                fd.write("# yaw_step "+str(yaw_step)+" pitch_step "+str(pitch_step)+" distance "+str(self.distances[yaw_step][pitch_step])+"\n"+"v "+str(x_coord)+" "+str(y_coord)+" "+str(z_coord)+"\n")
+            
         # write faces
-        for yaw_deg in range(0, self.max_yaw_deg):
-            for pitch_deg in range(0, self.max_pitch_deg):
+        for yaw_step in range(0, self.max_yaw_step):
+            for pitch_step in range(0, self.max_pitch_step):
                 #    v1             v2
                 #
                 #
                 #    v4             v3
-
-                v1 = 1 + (yaw_deg * (self.max_pitch_deg + 1) + pitch_deg)
-                v2 = 1 + ((yaw_deg + 1) * (self.max_pitch_deg + 1) + pitch_deg)
-                v3 = 1 + ((yaw_deg + 1) * (self.max_pitch_deg + 1) + (pitch_deg + 1))
-                v4 = 1 + (yaw_deg * (self.max_pitch_deg + 1) + (pitch_deg + 1))
+                
+                v1 = 1 + (yaw_step * (self.max_pitch_step + 1) + pitch_step)
+                v2 = 1 + ((yaw_step + 1) * (self.max_pitch_step + 1) + pitch_step)
+                v3 = 1 + ((yaw_step + 1) * (self.max_pitch_step + 1) + (pitch_step + 1))
+                v4 = 1 + (yaw_step * (self.max_pitch_step + 1) + (pitch_step + 1))
                 fd.write("f "+str(v1)+" "+str(v2)+" "+str(v3)+"\n")
                 fd.write("f "+str(v1)+" "+str(v3)+" "+str(v4)+"\n")
-
+            
         # connecting max yaw to yaw 0
-        for pitch_deg in range(0, self.max_pitch_deg):
-            v1 = 1 + (self.max_yaw_deg * (self.max_pitch_deg + 1) + pitch_deg)
-            v2 = 1 + (pitch_deg)
-            v3 = 1 + ((pitch_deg + 1))
-            v4 = 1 + (self.max_yaw_deg * (self.max_pitch_deg + 1) + (pitch_deg + 1))
+        for pitch_step in range(0, self.max_pitch_step):
+            v1 = 1 + (self.max_yaw_step * (self.max_pitch_step + 1) + pitch_step)
+            v2 = 1 + (pitch_step)
+            v3 = 1 + ((pitch_step + 1))
+            v4 = 1 + (self.max_yaw_step * (self.max_pitch_step + 1) + (pitch_step + 1))
             fd.write("f "+str(v1)+" "+str(v2)+" "+str(v3)+"\n")
             fd.write("f "+str(v1)+" "+str(v3)+" "+str(v4)+"\n")
 
