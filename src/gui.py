@@ -59,17 +59,38 @@ class GUI:
         self.cancel_btn["state"] = "normal"
 
         # scan into self.distances
-        for yaw_step in range(0, self.max_yaw_step + 1):
+        yaw_step = 0
+        while (yaw_step <= self.max_yaw_step):
+
             self.control.set_yaw(yaw_step * self.yaw_deg_per_step)
             self.progress.set((yaw_step / self.max_yaw_step) * 100)
 
             for pitch_step in range(0, (self.max_pitch_step + 1)):
+
+                if (self.animation_running == False):
+                    self.feedback_lbl["text"] = "Canceled scan."
+                    break
+
                 self.control.set_pitch(pitch_step * self.pitch_deg_per_step)
                 self.distances[yaw_step][pitch_step] = self.control.get_distance()
 
-            if (self.animation_running == False):
-                self.feedback_lbl["text"] = "Canceled scan."
-                break
+            yaw_step += 1
+            if (yaw_step > self.max_yaw_step):
+                break;
+
+            self.control.set_yaw(yaw_step * self.yaw_deg_per_step)
+            self.progress.set((yaw_step / self.max_yaw_step) * 100)
+
+            for pitch_step in reversed(range(0, (self.max_pitch_step + 1))):
+
+                if (self.animation_running == False):
+                    self.feedback_lbl["text"] = "Canceled scan."
+                    break
+
+                self.control.set_pitch(pitch_step * self.pitch_deg_per_step)
+                self.distances[yaw_step][pitch_step] = self.control.get_distance()
+
+            yaw_step += 1
 
         self.control.set_yaw(0)
         self.control.set_pitch(0)
